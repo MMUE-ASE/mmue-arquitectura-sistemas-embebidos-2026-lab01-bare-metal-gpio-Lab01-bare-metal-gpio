@@ -1,0 +1,34 @@
+name: "Lab 1 — Corrección preguntas guiadas"
+
+on:
+  push:
+    paths:
+      - "respuestas.env"
+      - "scripts/check_answers.sh"
+      - ".github/workflows/grade.yml"
+
+jobs:
+  check-answers:
+    name: Comprobar respuestas
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # El secret LAB1_ANSWER_KEY se define en la organización de GitHub
+      - name: Crear fichero de clave (temporal, solo en runner)
+        env:
+          LAB1_ANSWER_KEY: ${{ secrets.LAB1_ANSWER_KEY }}
+        run: |
+          if [[ -z "$LAB1_ANSWER_KEY" ]]; then
+            echo "ERROR: El secret LAB1_ANSWER_KEY no está configurado en este repositorio."
+            echo "       Configúralo en Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "$LAB1_ANSWER_KEY" > /tmp/answer_key.env
+
+      - name: Ejecutar corrección
+        run: |
+          chmod +x scripts/check_answers.sh
+          bash scripts/check_answers.sh respuestas.env /tmp/answer_key.env | tee -a "$GITHUB_STEP_SUMMARY"

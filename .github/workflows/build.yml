@@ -1,0 +1,42 @@
+name: "Lab 1 — Verificación de compilación"
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - "inc/**"
+      - "startup/**"
+      - "linker/**"
+      - "scripts/build.sh"
+      - ".github/workflows/build.yml"
+
+jobs:
+  build:
+    name: Compilar firmware
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar toolchain arm-none-eabi
+        run: sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
+
+      - name: Compilar
+        env:
+          # Solo promociona a error los warnings que suelen indicar bugs reales.
+          # Evitamos -Werror global para que la skeleton inicial (stubs con
+          # parametros sin usar) no rompa la CI antes de que el alumno empiece.
+          EXTRA_CFLAGS: "-Werror=implicit-function-declaration -Werror=return-type -Werror=incompatible-pointer-types"
+        run: |
+          chmod +x scripts/build.sh
+          bash scripts/build.sh
+
+      - name: Guardar artefactos
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-lab1
+          path: |
+            output/lab1.elf
+            output/lab1.bin
+            output/lab1.hex
